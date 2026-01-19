@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Cascade</title>
+    <style>
+        body { background-color: #00274C; color: #FFCB05; font-family: Arial, sans-serif; text-align: center; transition: background-color 0.5s, color 0.5s; margin: 0; padding: 0; }
+        canvas { background-color: #000; display: block; margin: 20px auto; border: 2px solid #FFCB05; transition: border-color 0.5s; width: 95%; max-width: 800px; height: auto; }
+        #game-info, #languageSelector, #controls, #keyboard, #colorSchemes { margin-top: 20px; padding: 0 10px; }
+        .key { display: inline-block; padding: 8px 12px; margin: 3px; border: 1px solid #fff; border-radius: 5px; cursor: pointer; background-color: #666; color: white; font-size: 16px; }
+        .key:hover { background-color: #555; }
+        #pauseMessage { display: none; font-size: 2em; color: white; background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); text-shadow: 2px 2px 4px #000; }
+        button, select, label { padding: 10px; font-size: 16px; margin: 5px; }
+        .color-button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #FFF; cursor: pointer; display: inline-block; margin: 5px; transition: background-color 0.5s, border-color 0.5s; }
+        #fontSelect option { font-family: Arial, sans-serif; }
+        #fontSelect option[value="Arial"] { font-family: Arial, sans-serif; }
+        #fontSelect option[value="Courier New"] { font-family: 'Courier New', Courier, monospace; }
+        #fontSelect option[value="Georgia"] { font-family: Georgia, serif; }
+        #fontSelect option[value="Impact"] { font-family: Impact, Charcoal, sans-serif; }
+        #fontSelect option[value="Times New Roman"] { font-family: 'Times New Roman', Times, serif; }
+        #fontSelect option[value="Trebuchet MS"] { font-family: 'Trebuchet MS', Helvetica, sans-serif; }
+        #fontSelect option[value="Verdana"] { font-family: Verdana, Geneva, sans-serif; }
+        #fontSelect option[value="Comic Sans MS"] { font-family: 'Comic Sans MS', cursive, sans-serif; }
+        #fontSelect option[value="Tahoma"] { font-family: Tahoma, Geneva, sans-serif; }
+        #fontSelect option[value="Lucida Console"] { font-family: 'Lucida Console', Monaco, monospace; }
+        #fontSelect option[value="Garamond"] { font-family: Garamond, serif; }
+        #fontSelect option[value="Papyrus"] { font-family: Papyrus, fantasy; }
+        #fontSelect option[value="Palatino"] { font-family: 'Palatino Linotype', Palatino, serif; }
+        #fontSelect option[value="Arial Black"] { font-family: 'Arial Black', Gadget, sans-serif; }
+        #fontSelect option[value="Lucida Sans"] { font-family: 'Lucida Sans', Geneva, sans-serif; }
+        #fontSelect option[value="Copperplate"] { font-family: Copperplate, serif; }
+        #fontSelect option[value="Didot"] { font-family: Didot, serif; }
+        #fontSelect option[value="Gill Sans"] { font-family: 'Gill Sans', sans-serif; }
+        #fontSelect option[value="Rockwell"] { font-family: Rockwell, serif; }
+        #fontSelect option[value="Century Gothic"] { font-family: 'Century Gothic', sans-serif; }
+        #fontSelect option[value="Scramble"] { font-family: Arial, sans-serif; font-style: italic; }
+        #language option[disabled] { font-style: italic; }
+        /* Ensure mobile keyboard appears */
+        input[type="text"] { position: absolute; top: -1000px; opacity: 0; }
+    </style>
+</head>
+<body>
+    <div id="game-info">
+        <h1>Letter Cascade</h1>
+        <p>Score: <span id="score">0</span> | Lives: <span id="lives">5</span></p>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <!-- Pause Message -->
+    <div id="pauseMessage">Game Paused<br>Press Space to continue</div>
+
+    <!-- Language Selector and Speed Control -->
+    <div id="languageSelector">
+        <label for="language">Select Language: </label>
+        <select id="language">
+            <option value="" disabled selected>Select a language</option>
+            <option value="russian">Russian</option>
+            <option value="spanish">Spanish</option>
+            <option value="english">English</option>
+            <option value="hindi">Hindi</option>
+            <option value="arabic">Arabic</option>
+            <option value="french">French</option>
+            <option value="korean">Korean</option>
+            <option value="hebrew">Hebrew*</option>
+            <option value="thai">Thai*</option>
+            <option value="japanese">Japanese</option>
+            <option value="ethiopian">Ethiopian*</option>
+            <option value="chinese">Chinese</option>
+            <option value="portuguese">Portuguese</option>
+            <option value="italian">Italian</option>
+            <option value="german">German</option>
+            <option value="swedish">Swedish</option>
+            <option value="dutch">Dutch</option>
+            <option value="polish">Polish</option>
+            <option value="czech">Czech</option>
+            <option value="greek">Greek</option>
+            <option value="turkish">Turkish</option>
+            <option value="finnish">Finnish</option>
+            <option value="norwegian">Norwegian</option>
+            <option value="romanian">Romanian</option>
+            <option value="danish">Danish</option>
+            <option value="hungarian">Hungarian</option>
+            <option value="slovak">Slovak</option>
+            <option value="slovenian">Slovenian</option>
+        </select>
+        <button id="startGame">Start Game</button>
+        <label for="speed">Speed: </label>
+        <select id="speed">
+            <option value="1" selected>>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+        </select>
+    </div>
+
+    <!-- Hidden Input to trigger mobile keyboard -->
+    <input type="text" id="mobileInput" />
+
+    <!-- Virtual Keyboard -->
+    <div id="keyboard">
+        <p>Click on a letter below:</p>
+        <div id="languageKeys"></div>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <label for="fontSelect">Font Style: </label>
+        <select id="fontSelect">
+            <option value="Arial">Arial</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Impact">Impact</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Comic Sans MS">Comic Sans MS</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Lucida Console">Lucida Console</option>
+            <option value="Garamond">Garamond</option>
+            <option value="Papyrus">Papyrus</option>
+            <option value="Palatino">Palatino</option>
+            <option value="Arial Black">Arial Black</option>
+            <option value="Lucida Sans">Lucida Sans</option>
+            <option value="Copperplate">Copperplate</option>
+            <option value="Didot">Didot</option>
+            <option value="Gill Sans">Gill Sans</option>
+            <option value="Rockwell">Rockwell</option>
+            <option value="Century Gothic">Century Gothic</option>
+            <option value="Scramble" selected>Scramble</option>
+        </select>
+        <label>
+            <input type="checkbox" id="highlightToggle" checked> Highlight Letters
+        </label>
+        <button id="resetGame">Reset Game</button>
+    </div>
+
+    <!-- Color Schemes -->
+    <div id="colorSchemes">
+        <p>Color Schemes:</p>
+        <span class="color-button" style="background-color: #00274C; border-color: #FFCB05;" onclick="setColorScheme('umichMaize')"></span>
+        <span class="color-button" style="background-color: #FFCB05; border-color: #00274C;" onclick="setColorScheme('umichBlue')"></span>
+        <span class="color-button" style="background-color: #121212;" onclick="setColorScheme('dark')"></span>
+        <span class="color-button" style="background-color: #FDFD96;" onclick="setColorScheme('pastel')"></span>
+        <span class="color-button" style="background-color: #39FF14;" onclick="setColorScheme('neon')"></span>
+        <span class="color-button" style="background-color: #002B36;" onclick="setColorScheme('solarized')"></span>
+        <span class="color-button" style="background-color: #228B22;" onclick="setColorScheme('forest')"></span>
+        <span class="color-button" style="background-color: #0077BE;" onclick="setColorScheme('ocean')"></span>
+        <span class="color-button" style="background-color: #FF4500;" onclick="setColorScheme('sunset')"></span>
+        <span class="color-button" style="background-color: #8B008B;" onclick="setColorScheme('berry')"></span>
+        <span class="color-button" style="background-color: #191970;" onclick="setColorScheme('midnight')"></span>
+    </div>
+    <p>* Languages marked with an asterisk are not fully supported by the speech synthesizer.</p>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const livesElement = document.getElementById("lives");
+        const languageSelector = document.getElementById("language");
+        const startButton = document.getElementById("startGame");
+        const resetButton = document.getElementById("resetGame");
+        const fontSelect = document.getElementById("fontSelect");
+        const highlightToggle = document.getElementById("highlightToggle");
+        const speedSelector = document.getElementById("speed");
+        const keyboardContainer = document.getElementById("languageKeys");
+        const pauseMessage = document.getElementById("pauseMessage");
+        const mobileInput = document.getElementById("mobileInput");
+
+        const keyboardLayouts = {
+            russian: [["Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Х", "Ъ"],["Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Ж", "Э"],["Я", "Ч", "С", "М", "И", "Т", "Ь", "Б", "Ю"]],
+            spanish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ñ"],["Z", "X", "C", "V", "B", "N", "M"]],
+            english: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],["A", "S", "D", "F", "G", "H", "J", "K", "L"],["Z", "X", "C", "V", "B", "N", "M"]],
+            hindi: [["क", "ख", "ग", "घ", "ङ", "च", "छ", "ज", "झ", "ञ"],["ट", "ठ", "ड", "ढ", "ण", "त", "थ", "द", "ध", "न"],["प", "फ", "ब", "भ", "म", "य", "र", "ल", "व", "श", "ष", "स", "ह"]],
+            arabic: [["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د"],["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],["ئ", "ء", "ؤ", "ر", "ى", "ة", "و", "ز", "ظ"]],
+            french: [["A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P"],["Q", "S", "D", "F", "G", "H", "J", "K", "L", "M"],["W", "X", "C", "V", "B", "N"]],
+            korean: [["ㅂ", "ㅈ", "ㄷ", "ㄱ", "ㅅ", "ㅛ", "ㅕ", "ㅑ", "ㅐ", "ㅔ"], ["ㅁ", "ㄴ", "ㅇ", "ㄹ", "ㅎ", "ㅗ", "ㅓ", "ㅏ", "ㅣ"], ["ㅋ", "ㅌ", "ㅊ", "ㅍ", "ㅠ", "ㅜ", "ㅡ"]],
+            hebrew: [["ק", "ר", "א", "ט", "ו", "ן", "ם", "פ"], ["ש", "ד", "ג", "כ", "ע", "י", "ח", "ל", "ך", "ף"], ["ז", "ס", "ב", "ה", "נ", "מ", "צ", "ת", "ץ"]],
+            thai: [["ๆ", "ไ", "ำ", "พ", "ะ", "ั", "ี", "ร", "น", "ย", "บ"], ["ฟ", "ห", "ก", "ด", "เ", "้", "่", "า", "ส", "ว"], ["ผ", "ป", "แ", "อ", "ิ", "ื", "ท", "ม", "ใ", "ฝ"]],
+            japanese: [["あ", "い", "う", "え", "お", "か", "き", "く", "け", "こ"], ["さ", "し", "す", "せ", "そ", "た", "ち", "つ", "て", "と"], ["な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ"]],
+            ethiopian: [["ሀ", "ለ", "መ", "ሠ", "ረ", "ሰ", "ሸ", "ቀ", "በ", "ቨ"], ["ተ", "ቸ", "ኀ", "ነ", "ኘ", "አ", "ከ", "ኸ", "ወ", "ዘ"], ["ዠ", "ደ", "ጀ", "ገ", "ጠ", "ጨ", "ጰ", "ጸ", "ፀ", "ፈ"]],
+            chinese: [["我", "你", "他", "她", "它", "们", "这", "那", "的", "吗"], ["是", "有", "和", "在", "去", "来", "不", "对", "好", "吧"]],
+            portuguese: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ç"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            italian: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "È"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            german: [["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P", "Ü"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"], ["Y", "X", "C", "V", "B", "N", "M"]],
+            swedish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "Å"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö", "Ä"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            dutch: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            polish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "Ł"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            czech: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ň"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            greek: [["Α", "Β", "Γ", "Δ", "Ε", "Ζ", "Η", "Θ", "Ι", "Κ"], ["Λ", "Μ", "Ν", "Ξ", "Ο", "Π", "Ρ", "Σ", "Τ", "Υ"], ["Φ", "Χ", "Ψ", "Ω"]],
+            turkish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "Ğ"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ş"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            finnish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ö"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            norwegian: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "Å"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ø", "Æ"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            romanian: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ț"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            danish: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "Å"], ["A", "S", "D", "F", "G", "H", "J", "K", "L", "Ø", "Æ"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            hungarian: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            slovak: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L"], ["Z", "X", "C", "V", "B", "N", "M"]],
+            slovenian: [["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], ["A", "S", "D", "F", "G", "H", "J", "K", "L"], ["Z", "X", "C", "V", "B", "N", "M"]]
+        };
+
+        const availableFonts = [
+            "Arial", "Courier New", "Georgia", "Impact", "Times New Roman", 
+            "Trebuchet MS", "Verdana", "Comic Sans MS", "Tahoma", "Lucida Console",
+            "Garamond", "Papyrus", "Palatino", "Arial Black", "Lucida Sans",
+            "Copperplate", "Didot", "Gill Sans", "Rockwell", "Century Gothic"
+        ];
+
+        const colorSpeeds = [
+            { speed: 1, color: "green" },
+            { speed: 1.5, color: "blue" },
+            { speed: 2, color: "yellow" },
+            { speed: 2.5, color: "orange" },
+            { speed: 3, color: "red" }
+        ];
+
+        let score = 0;
+        let lives = 5;
+        let letters = [];
+        let paused = false;
+        let typingPause = false;
+        let gameStarted = false;
+        let currentLanguage = '';
+        const letterPadding = 30;
+
+        // Color schemes
+        const colorSchemes = {
+            umichMaize: { bgColor: '#00274C', textColor: '#FFCB05', borderColor: '#FFCB05' },
+            umichBlue: { bgColor: '#FFCB05', textColor: '#00274C', borderColor: '#00274C' },
+            dark: { bgColor: '#121212', textColor: '#E0E0E0', borderColor: '#BB86FC' },
+            pastel: { bgColor: '#FDFD96', textColor: '#63474D', borderColor: '#A8E6CF' },
+            neon: { bgColor: '#39FF14', textColor: '#FF1493', borderColor: '#9400D3' },
+            solarized: { bgColor: '#002B36', textColor: '#839496', borderColor: '#268BD2' },
+            forest: { bgColor: '#228B22', textColor: '#F5FFFA', borderColor: '#2E8B57' },
+            ocean: { bgColor: '#0077BE', textColor: '#FFFFFF', borderColor: '#00BFFF' },
+            sunset: { bgColor: '#FF4500', textColor: '#FFE4B5', borderColor: '#FF6347' },
+            berry: { bgColor: '#8B008B', textColor: '#FFC0CB', borderColor: '#C71585' },
+            midnight: { bgColor: '#191970', textColor: '#F8F8FF', borderColor: '#1E90FF' }
+        };
+
+        function setColorScheme(schemeName) {
+            const scheme = colorSchemes[schemeName];
+            document.body.style.backgroundColor = scheme.bgColor;
+            document.body.style.color = scheme.textColor;
+            canvas.style.borderColor = scheme.borderColor;
+        }
+
+        // Set default color scheme
+        setColorScheme('umichMaize');
+
+        // Adjust letter speed based on selected speed factor
+        function adjustSpeed(baseSpeed) {
+            switch (speedSelector.value) {
+                case "1": return baseSpeed * 0.25;  // 125% slower
+                case "2": return baseSpeed * 0.5;   // 100% slower
+                case "3": return baseSpeed * 0.75;  // 75% slower
+                case "4": return baseSpeed;         // 50% slower
+                case "5": return baseSpeed * 1.25;  // 25% slower
+                case "6": return baseSpeed * 1.5;   // Default speed
+                case "7": return baseSpeed * 1.75;  // 25% faster
+                case "8": return baseSpeed * 2;     // 50% faster
+                case "9": return baseSpeed * 2.25;  // 75% faster
+                case "10": return baseSpeed * 2.5;  // 100% faster
+                default: return baseSpeed;
+            }
+        }
+
+        // Create a letter with a random speed and associated color
+        function createLetter() {
+            const lettersArray = keyboardLayouts[currentLanguage]?.flat() || defaultKeyboard.flat();
+            const letter = lettersArray[Math.floor(Math.random() * lettersArray.length)];
+            const x = Math.random() * (canvas.width - letterPadding * 2) + letterPadding;
+            const y = 0;
+            const colorSpeed = colorSpeeds[Math.floor(Math.random() * colorSpeeds.length)];
+            return { letter, x, y, speed: adjustSpeed(colorSpeed.speed), color: colorSpeed.color };
+        }
+
+        // Add initial letters
+        function initializeLetters() {
+            letters = [];
+            for (let i = 0; i < 5; i++) {
+                letters.push(createLetter());
+            }
+        }
+
+        // Draw all letters with selected font style and highlighting
+        function drawLetters() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            letters.forEach(letterObj => {
+                ctx.fillStyle = letterObj.color;
+                const selectedFont = fontSelect.value === "Scramble" ? getRandomFont() : fontSelect.value;
+                ctx.font = `30px ${selectedFont}`;
+                ctx.textAlign = "center";
+                ctx.shadowColor = highlightToggle.checked ? "rgba(255,255,255,0.5)" : "transparent";
+                ctx.shadowBlur = highlightToggle.checked ? 10 : 0;
+                ctx.fillText(letterObj.letter, letterObj.x, letterObj.y);
+            });
+        }
+
+        // Randomly select a font from the available list
+        function getRandomFont() {
+            return availableFonts[Math.floor(Math.random() * availableFonts.length)];
+        }
+
+        // Update letter positions
+        function updateLetters() {
+            letters.forEach(letterObj => {
+                letterObj.y += letterObj.speed;
+                if (letterObj.y > canvas.height) {
+                    lives--;
+                    letters.splice(letters.indexOf(letterObj), 1);
+                    letters.push(createLetter());
+                    updateScore();
+                    if (lives <= 0) {
+                        alert('Game Over! Final Score: ' + score);
+                        resetGame();
+                    }
+                }
+            });
+        }
+
+        // Handle input for typed or clicked letters
+        async function handleInput(input) {
+            const letterIndex = letters.findIndex(l => l.letter === input.toUpperCase());
+            if (letterIndex !== -1) {
+                const letter = letters[letterIndex];
+                letters.splice(letterIndex, 1);
+                letters.push(createLetter());
+                typingPause = true;
+                await playSound(letter.letter);
+                typingPause = false;
+                score += 10;
+                updateScore();
+            }
+        }
+
+        // Update score and lives display
+        function updateScore() {
+            scoreElement.textContent = score;
+            livesElement.textContent = lives;
+        }
+
+        // Reset game
+        function resetGame() {
+            score = 0;
+            lives = 5;
+            gameStarted = false;
+            letters = []; // Clear old letters
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+            currentLanguage = '';
+            languageSelector.selectedIndex = 0; // Reset dropdown
+            languageSelector.disabled = false; // Re-enable language selection after reset
+            updateScore();
+            createVirtualKeyboard();
+        }
+
+        // Play sound for each letter
+        function playSound(letter) {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(letter);
+                utterance.lang = getLanguageCode(currentLanguage);
+                utterance.onend = resolve;
+                speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Get language code for speech synthesis
+        function getLanguageCode(language) {
+            return {
+                russian: 'ru-RU', spanish: 'es-ES', english: 'en-US', hindi: 'hi-IN', arabic: 'ar-SA', french: 'fr-FR',
+                korean: 'ko-KR', hebrew: 'he-IL', thai: 'th-TH', japanese: 'ja-JP', ethiopian: 'am-ET', chinese: 'zh-CN',
+                portuguese: 'pt-PT', italian: 'it-IT', german: 'de-DE', swedish: 'sv-SE', dutch: 'nl-NL', polish: 'pl-PL',
+                czech: 'cs-CZ', greek: 'el-GR', turkish: 'tr-TR', finnish: 'fi-FI', norwegian: 'no-NO', romanian: 'ro-RO',
+                danish: 'da-DK', hungarian: 'hu-HU', slovak: 'sk-SK', slovenian: 'sl-SI'
+            }[language] || 'en-US';
+        }
+
+        // Create virtual keyboard for current language
+        function createVirtualKeyboard() {
+            keyboardContainer.innerHTML = '';
+            const layout = keyboardLayouts[currentLanguage] || defaultKeyboard;
+            layout.forEach(row => {
+                const rowDiv = document.createElement("div");
+                row.forEach(letter => {
+                    const key = document.createElement("div");
+                    key.className = "key";
+                    key.textContent = letter;
+                    key.onclick = () => handleInput(letter);
+                    rowDiv.appendChild(key);
+                });
+                keyboardContainer.appendChild(rowDiv);
+            });
+        }
+
+        // Start the game
+        startButton.addEventListener('click', () => {
+            if (!languageSelector.value) {
+                alert('Please select a language to start the game.');
+                return;
+            }
+            currentLanguage = languageSelector.value;
+            initializeLetters();
+            gameStarted = true;
+            languageSelector.disabled = true;
+            mobileInput.focus(); // Bring up mobile keyboard when game starts
+            createVirtualKeyboard(); // Update the virtual keyboard on game start
+        });
+
+        // Reset the game and enable language selection
+        resetButton.addEventListener('click', () => {
+            resetGame();
+            languageSelector.disabled = false; // Re-enable language selection after reset
+        });
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (gameStarted && !typingPause) handleInput(e.key);
+            if (e.code === 'Space') {
+                paused = !paused;
+                pauseMessage.style.display = paused ? 'block' : 'none';
+            }
+        });
+
+        // Listen for input changes to detect mobile keyboard input
+        mobileInput.addEventListener('input', (e) => {
+            const input = e.target.value.toUpperCase();
+            if (input) {
+                handleInput(input);
+                e.target.value = ''; // Clear input to prepare for the next key
+            }
+        });
+
+        // Game loop
+        function gameLoop() {
+            if (gameStarted && !paused && !typingPause) {
+                drawLetters();
+                updateLetters();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize the game loop
+        gameLoop();
+    </script>
+</body>
+</html>

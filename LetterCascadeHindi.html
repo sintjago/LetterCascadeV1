@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>अक्षर जलप्रपात</title>
+  <style>
+    body {
+      background-color: white;
+      color: black;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #gameContainer {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    canvas {
+      background-color: #000;
+      width: 100%;
+      height: 420px;
+      border: 2px solid #888;
+      display: block;
+      margin: 20px auto 10px;
+    }
+
+    #infoBar {
+      margin-top: 10px;
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .box-preview {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background-color: #f8f8f8;
+      border: 2px solid black;
+      border-radius: 4px;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0 10px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-right: 4px;
+    }
+
+    select, button {
+      padding: 8px;
+      font-size: 16px;
+      border: 2px solid #888;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .color-button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #FFF;
+      cursor: pointer;
+      margin: 0 4px;
+      display: inline-block;
+    }
+
+    #colorSchemes {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    #styleLabel {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .key {
+      display: inline-block;
+      padding: 8px 12px;
+      margin: 3px;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #666;
+      color: white;
+      font-size: 16px;
+    }
+
+    .key:hover {
+      background-color: #555;
+    }
+
+    #pauseMessage {
+      display: none;
+      font-size: 2em;
+      color: white;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="420"></canvas>
+
+    <div id="infoBar">
+      <strong>अक्षर जलप्रपात</strong> |
+      स्कोर: <span id="score">0</span> |
+      जीवन: <span id="lives">5</span> (20 अक्षर = +1 जीवन)
+      <input type="checkbox" id="borderToggle" checked />
+      <div class="box-preview"></div>
+    </div>
+
+    <div id="controls">
+      <span class="label">फ़ॉन्ट:</span>
+      <select id="fontSelect">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Impact">Impact</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Trebuchet MS">Trebuchet MS</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Comic Sans MS">Comic Sans</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="Lucida Console">Lucida Console</option>
+        <option value="Garamond">Garamond</option>
+        <option value="Papyrus">Papyrus</option>
+        <option value="Palatino">Palatino</option>
+        <option value="Arial Black">Arial Black</option>
+        <option value="Lucida Sans">Lucida Sans</option>
+        <option value="Copperplate">Copperplate</option>
+        <option value="Didot" selected>Didot</option>
+        <option value="Gill Sans">Gill Sans</option>
+        <option value="Rockwell">Rockwell</option>
+        <option value="Century Gothic">Century Gothic</option>
+        <option value="Scramble">Scramble</option>
+      </select>
+
+      <label><input type="checkbox" id="highlightToggle" checked> हाइलाइट</label>
+      <button id="startGame">शुरू करें</button>
+      <button id="resetGame">रीसेट</button>
+
+      <span class="label">गति:</span>
+      <select id="speed">
+        <option value="1">&gt;1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+
+      <button id="soundToggle">🔊</button>
+    </div>
+
+    <div id="colorSchemes">
+      <span id="styleLabel">रंग शैली:</span>
+      <span class="color-button" style="background-color: white; border-color: black;" onclick="setColorScheme('neutral')"></span>
+      <span class="color-button" style="background-color: #00274C; border-color: #FFCB05;" onclick="setColorScheme('umichMaize')"></span>
+      <span class="color-button" style="background-color: #FFCB05; border-color: #00274C;" onclick="setColorScheme('umichBlue')"></span>
+      <span class="color-button" style="background-color: #121212;" onclick="setColorScheme('dark')"></span>
+      <span class="color-button" style="background-color: #FDFD96;" onclick="setColorScheme('pastel')"></span>
+      <span class="color-button" style="background-color: #39FF14;" onclick="setColorScheme('neon')"></span>
+      <span class="color-button" style="background-color: #002B36;" onclick="setColorScheme('solarized')"></span>
+      <span class="color-button" style="background-color: #228B22;" onclick="setColorScheme('forest')"></span>
+      <span class="color-button" style="background-color: #0077BE;" onclick="setColorScheme('ocean')"></span>
+      <span class="color-button" style="background-color: #FF4500;" onclick="setColorScheme('sunset')"></span>
+      <span class="color-button" style="background-color: #8B008B;" onclick="setColorScheme('berry')"></span>
+      <span class="color-button" style="background-color: #191970;" onclick="setColorScheme('midnight')"></span>
+    </div>
+
+    <div id="keyboard">
+      <div id="languageKeys"></div>
+    </div>
+
+    <div id="pauseMessage">रुका हुआ<br />जारी रखने के लिए स्पेस दबाएं</div>
+  </div>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const scoreElement = document.getElementById("score");
+const livesElement = document.getElementById("lives");
+const startButton = document.getElementById("startGame");
+const resetButton = document.getElementById("resetGame");
+const fontSelect = document.getElementById("fontSelect");
+const highlightToggle = document.getElementById("highlightToggle");
+const speedSelector = document.getElementById("speed");
+const keyboardContainer = document.getElementById("languageKeys");
+const pauseMessage = document.getElementById("pauseMessage");
+const soundToggle = document.getElementById("soundToggle");
+const borderToggle = document.getElementById("borderToggle");
+
+const keyboard = [
+  ["क", "ख", "ग", "घ", "च", "छ", "ज", "झ", "ट", "ठ"],
+  ["ड", "ढ", "ण", "त", "थ", "द", "ध", "न", "प", "फ"],
+  ["ब", "भ", "म", "य", "र", "ल", "व", "श", "ष", "स", "ह"]
+];
+
+const fonts = [...fontSelect.options].map(opt => opt.value);
+const lightColors = ["#FF4C4C", "#FFD700", "#00FA9A", "#1E90FF", "#FF69B4"];
+const darkColors = ["#222222", "#004080", "#800000", "#3A3A3A", "#0B3D91"];
+
+let score = 0;
+let lives = 5;
+let letters = [];
+let paused = false;
+let typingPause = false;
+let gameStarted = false;
+let soundOn = true;
+let correctHits = 0;
+const HITS_PER_LIFE = 20;
+
+const colorSchemes = {
+  neutral: { bgColor: 'white', textColor: 'black', borderColor: '#888' },
+  umichMaize: { bgColor: '#00274C', textColor: '#FFCB05', borderColor: '#FFCB05' },
+  umichBlue: { bgColor: '#FFCB05', textColor: '#00274C', borderColor: '#00274C' },
+  dark: { bgColor: '#121212', textColor: '#E0E0E0', borderColor: '#BB86FC' },
+  pastel: { bgColor: '#FDFD96', textColor: '#63474D', borderColor: '#A8E6CF' },
+  neon: { bgColor: '#39FF14', textColor: '#FF1493', borderColor: '#9400D3' },
+  solarized: { bgColor: '#002B36', textColor: '#839496', borderColor: '#268BD2' },
+  forest: { bgColor: '#228B22', textColor: '#F5FFFA', borderColor: '#2E8B57' },
+  ocean: { bgColor: '#0077BE', textColor: '#FFFFFF', borderColor: '#00BFFF' },
+  sunset: { bgColor: '#FF4500', textColor: '#FFE4B5', borderColor: '#FF6347' },
+  berry: { bgColor: '#8B008B', textColor: '#FFC0CB', borderColor: '#C71585' },
+  midnight: { bgColor: '#191970', textColor: '#F8F8FF', borderColor: '#1E90FF' }
+};
+
+function setColorScheme(name) {
+  const scheme = colorSchemes[name];
+  document.body.style.backgroundColor = scheme.bgColor;
+  document.body.style.color = scheme.textColor;
+  canvas.style.borderColor = scheme.borderColor;
+}
+setColorScheme('neutral');
+
+function adjustSpeed(base) {
+  const factor = parseInt(speedSelector.value) || 3;
+  return base * (factor / 4);
+}
+
+function randomColor() {
+  return borderToggle.checked
+    ? darkColors[Math.floor(Math.random() * darkColors.length)]
+    : lightColors[Math.floor(Math.random() * lightColors.length)];
+}
+
+function createLetter() {
+  const all = keyboard.flat();
+  const letter = all[Math.floor(Math.random() * all.length)];
+  const x = Math.random() * (canvas.width - 60) + 30;
+  const y = 0;
+  const speed = adjustSpeed(1 + Math.random() * 2);
+  const color = randomColor();
+  return { letter, x, y, speed, color };
+}
+
+function initializeLetters() {
+  letters = [];
+  for (let i = 0; i < 5; i++) letters.push(createLetter());
+}
+
+function drawLetters() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const l of letters) {
+    const font = fontSelect.value === "Scramble"
+      ? fonts[Math.floor(Math.random() * fonts.length)]
+      : fontSelect.value;
+    ctx.font = `30px ${font}`;
+    ctx.textAlign = "center";
+
+    const w = 70, h = 40;
+    const x = l.x - w / 2;
+    const y = l.y - 30;
+
+    if (borderToggle.checked) {
+      ctx.fillStyle = "#f8f8f8";
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 10);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = l.color;
+    if (highlightToggle.checked || !borderToggle.checked) {
+      ctx.shadowColor = borderToggle.checked ? "rgba(255,255,255,0.5)" : "yellow";
+      ctx.shadowBlur = borderToggle.checked ? 10 : 15;
+    } else {
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.fillText(l.letter, l.x, l.y);
+  }
+}
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+  };
+}
+
+function updateLetters() {
+  for (const l of letters) {
+    l.y += l.speed;
+    if (l.y > canvas.height) {
+      lives--;
+      letters.splice(letters.indexOf(l), 1);
+      letters.push(createLetter());
+      updateScore();
+      if (lives <= 0) {
+        alert('खेल समाप्त! अंतिम स्कोर: ' + score);
+        resetGame();
+      }
+    }
+  }
+}
+
+async function handleInput(key) {
+  const index = letters.findIndex(l => l.letter === key);
+  if (index !== -1) {
+    const l = letters[index];
+    letters.splice(index, 1);
+    letters.push(createLetter());
+    typingPause = true;
+    if (soundOn) await speakLetter(l.letter);
+    typingPause = false;
+    score += 10;
+    correctHits++;
+    if (correctHits % HITS_PER_LIFE === 0) lives++;
+    updateScore();
+  }
+}
+
+function updateScore() {
+  scoreElement.textContent = score;
+  livesElement.textContent = lives;
+}
+
+function resetGame() {
+  score = 0;
+  lives = 5;
+  correctHits = 0;
+  gameStarted = false;
+  letters = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  updateScore();
+  createKeyboard();
+}
+
+function speakLetter(letter) {
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance(letter);
+    u.lang = 'hi-IN';
+    u.onend = resolve;
+    speechSynthesis.cancel();
+    setTimeout(() => speechSynthesis.speak(u), 100);
+  });
+}
+
+function createKeyboard() {
+  keyboardContainer.innerHTML = '';
+  for (const row of keyboard) {
+    const rowDiv = document.createElement("div");
+    for (const l of row) {
+      const key = document.createElement("div");
+      key.className = "key";
+      key.textContent = l;
+      key.onclick = () => handleInput(l);
+      rowDiv.appendChild(key);
+    }
+    keyboardContainer.appendChild(rowDiv);
+  }
+}
+
+startButton.onclick = () => {
+  if (!gameStarted) {
+    initializeLetters();
+    gameStarted = true;
+    createKeyboard();
+  }
+};
+
+resetButton.onclick = resetGame;
+
+soundToggle.onclick = () => {
+  soundOn = !soundOn;
+  soundToggle.textContent = soundOn ? '🔊' : '🔇';
+};
+
+document.addEventListener('keydown', e => {
+  if (gameStarted && !typingPause) handleInput(e.key);
+  if (e.code === 'Space') {
+    paused = !paused;
+    pauseMessage.style.display = paused ? 'block' : 'none';
+  }
+});
+
+function gameLoop() {
+  if (gameStarted && !paused && !typingPause) {
+    drawLetters();
+    updateLetters();
+  }
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>

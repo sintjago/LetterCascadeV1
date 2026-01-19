@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cascada de Letras</title>
+  <style>
+    body {
+      background-color: white;
+      color: black;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    #gameContainer {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    canvas {
+      background-color: #000;
+      width: 100%;
+      height: 420px;
+      border: 2px solid #888;
+      display: block;
+      margin: 20px auto 10px;
+    }
+
+    #infoBar {
+      margin-top: 10px;
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .box-preview {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background-color: #f8f8f8;
+      border: 2px solid black;
+      border-radius: 4px;
+    }
+
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0 10px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-right: 4px;
+    }
+
+    select, button {
+      padding: 8px;
+      font-size: 16px;
+      border: 2px solid #888;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+    .color-button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid #FFF;
+      cursor: pointer;
+      margin: 0 4px;
+      display: inline-block;
+    }
+
+    #colorSchemes {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    #styleLabel {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .key {
+      display: inline-block;
+      padding: 8px 12px;
+      margin: 3px;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #666;
+      color: white;
+      font-size: 16px;
+    }
+
+    .key:hover {
+      background-color: #555;
+    }
+
+    #pauseMessage {
+      display: none;
+      font-size: 2em;
+      color: white;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    @media (max-width: 600px) {
+      #controls {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="420"></canvas>
+
+    <div id="infoBar">
+      <strong>Cascada de Letras</strong> |
+      Puntos: <span id="score">0</span> |
+      Vidas: <span id="lives">5</span> (20 L = 1 Vida extra)
+      <input type="checkbox" id="borderToggle" checked />
+      <div class="box-preview"></div>
+    </div>
+
+    <div id="controls">
+      <span class="label">Fuente:</span>
+      <select id="fontSelect">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Impact">Impact</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Trebuchet MS">Trebuchet MS</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Comic Sans MS">Comic Sans MS</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="Lucida Console">Lucida Console</option>
+        <option value="Garamond">Garamond</option>
+        <option value="Papyrus">Papyrus</option>
+        <option value="Palatino">Palatino</option>
+        <option value="Arial Black">Arial Black</option>
+        <option value="Lucida Sans">Lucida Sans</option>
+        <option value="Copperplate">Copperplate</option>
+        <option value="Didot" selected>Didot</option>
+        <option value="Gill Sans">Gill Sans</option>
+        <option value="Rockwell">Rockwell</option>
+        <option value="Century Gothic">Century Gothic</option>
+        <option value="Scramble">Scramble</option>
+      </select>
+
+      <label><input type="checkbox" id="highlightToggle" checked> Resaltar letras</label>
+      <button id="startGame">Iniciar</button>
+      <button id="resetGame">Reiniciar</button>
+
+      <span class="label">Velocidad:</span>
+      <select id="speed">
+        <option value="1">&gt;1</option>
+        <option value="2">2</option>
+        <option value="3" selected>3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+
+      <button id="soundToggle">🔊</button>
+    </div>
+
+    <div id="colorSchemes">
+      <span id="styleLabel">Estilo:</span>
+      <span class="color-button" style="background-color: white; border-color: black;" onclick="setColorScheme('neutral')"></span>
+      <span class="color-button" style="background-color: #00274C; border-color: #FFCB05;" onclick="setColorScheme('umichMaize')"></span>
+      <span class="color-button" style="background-color: #FFCB05; border-color: #00274C;" onclick="setColorScheme('umichBlue')"></span>
+      <span class="color-button" style="background-color: #121212;" onclick="setColorScheme('dark')"></span>
+      <span class="color-button" style="background-color: #FDFD96;" onclick="setColorScheme('pastel')"></span>
+      <span class="color-button" style="background-color: #39FF14;" onclick="setColorScheme('neon')"></span>
+      <span class="color-button" style="background-color: #002B36;" onclick="setColorScheme('solarized')"></span>
+      <span class="color-button" style="background-color: #228B22;" onclick="setColorScheme('forest')"></span>
+      <span class="color-button" style="background-color: #0077BE;" onclick="setColorScheme('ocean')"></span>
+      <span class="color-button" style="background-color: #FF4500;" onclick="setColorScheme('sunset')"></span>
+      <span class="color-button" style="background-color: #8B008B;" onclick="setColorScheme('berry')"></span>
+      <span class="color-button" style="background-color: #191970;" onclick="setColorScheme('midnight')"></span>
+    </div>
+
+    <div id="keyboard">
+      <div id="languageKeys"></div>
+    </div>
+
+    <div id="pauseMessage">Juego en pausa<br />Presiona Espacio para continuar</div>
+  </div>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const scoreElement = document.getElementById("score");
+const livesElement = document.getElementById("lives");
+const startButton = document.getElementById("startGame");
+const resetButton = document.getElementById("resetGame");
+const fontSelect = document.getElementById("fontSelect");
+const highlightToggle = document.getElementById("highlightToggle");
+const speedSelector = document.getElementById("speed");
+const keyboardContainer = document.getElementById("languageKeys");
+const pauseMessage = document.getElementById("pauseMessage");
+const soundToggle = document.getElementById("soundToggle");
+const borderToggle = document.getElementById("borderToggle");
+
+const teclado = [
+  ["A", "B", "C", "Ch", "D", "E", "F", "G", "H", "I"],
+  ["J", "K", "L", "Ll", "M", "N", "Ñ", "O", "P", "Q"],
+  ["R", "Rr", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+];
+
+const fuentesDisponibles = [...fontSelect.options].map(opt => opt.value);
+
+const colorSetBright = ["#FF4C4C", "#FFD700", "#00FA9A", "#1E90FF", "#FF69B4"]; // visible on black
+const colorSetDark = ["#222222", "#004080", "#800000", "#3A3A3A", "#0B3D91"]; // readable on off-white
+
+let puntos = 0;
+let vidas = 5;
+let letras = [];
+let pausado = false;
+let escribiendo = false;
+let juegoIniciado = false;
+let sonidoActivo = true;
+let letrasAcertadas = 0;
+const LETRAS_PARA_VIDA = 20;
+
+const esquemasColor = {
+  neutral: { bgColor: 'white', textColor: 'black', borderColor: '#888' },
+  umichMaize: { bgColor: '#00274C', textColor: '#FFCB05', borderColor: '#FFCB05' },
+  umichBlue: { bgColor: '#FFCB05', textColor: '#00274C', borderColor: '#00274C' },
+  dark: { bgColor: '#121212', textColor: '#E0E0E0', borderColor: '#BB86FC' },
+  pastel: { bgColor: '#FDFD96', textColor: '#63474D', borderColor: '#A8E6CF' },
+  neon: { bgColor: '#39FF14', textColor: '#FF1493', borderColor: '#9400D3' },
+  solarized: { bgColor: '#002B36', textColor: '#839496', borderColor: '#268BD2' },
+  forest: { bgColor: '#228B22', textColor: '#F5FFFA', borderColor: '#2E8B57' },
+  ocean: { bgColor: '#0077BE', textColor: '#FFFFFF', borderColor: '#00BFFF' },
+  sunset: { bgColor: '#FF4500', textColor: '#FFE4B5', borderColor: '#FF6347' },
+  berry: { bgColor: '#8B008B', textColor: '#FFC0CB', borderColor: '#C71585' },
+  midnight: { bgColor: '#191970', textColor: '#F8F8FF', borderColor: '#1E90FF' }
+};
+
+function setColorScheme(nombre) {
+  const esquema = esquemasColor[nombre];
+  document.body.style.backgroundColor = esquema.bgColor;
+  document.body.style.color = esquema.textColor;
+  canvas.style.borderColor = esquema.borderColor;
+}
+
+setColorScheme('neutral');
+
+function ajustarVelocidad(base) {
+  const factor = parseInt(speedSelector.value) || 3;
+  return base * (factor / 4);
+}
+
+function getLetterColor() {
+  return borderToggle.checked
+    ? colorSetDark[Math.floor(Math.random() * colorSetDark.length)]
+    : colorSetBright[Math.floor(Math.random() * colorSetBright.length)];
+}
+
+function crearLetra() {
+  const conjunto = teclado.flat();
+  const letra = conjunto[Math.floor(Math.random() * conjunto.length)];
+  const x = Math.random() * (canvas.width - 60) + 30;
+  const y = 0;
+  const velocidad = ajustarVelocidad(1 + Math.random() * 2);
+  const color = getLetterColor();
+  return { letra, x, y, velocidad, color };
+}
+
+function iniciarLetras() {
+  letras = [];
+  for (let i = 0; i < 5; i++) letras.push(crearLetra());
+}
+
+function dibujarLetras() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const l of letras) {
+    const fuente = fontSelect.value === "Scramble"
+      ? fuentesDisponibles[Math.floor(Math.random() * fuentesDisponibles.length)]
+      : fontSelect.value;
+    ctx.font = `30px ${fuente}`;
+    ctx.textAlign = "center";
+
+    const fixedWidth = 70;
+    const fixedHeight = 40;
+    const x = l.x - fixedWidth / 2;
+    const y = l.y - 30;
+
+    if (borderToggle.checked) {
+      ctx.fillStyle = "#f8f8f8";
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x, y, fixedWidth, fixedHeight, 10);
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = l.color;
+
+    // Shadow logic: yellow glow if no box; white glow if highlight toggle is on
+    if (highlightToggle.checked || !borderToggle.checked) {
+      ctx.shadowColor = borderToggle.checked ? "rgba(255,255,255,0.5)" : "yellow";
+      ctx.shadowBlur = borderToggle.checked ? 10 : 15;
+    } else {
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.fillText(l.letra, l.x, l.y);
+  }
+}
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+    this.beginPath();
+    this.moveTo(x + radius, y);
+    this.arcTo(x + width, y, x + width, y + height, radius);
+    this.arcTo(x + width, y + height, x, y + height, radius);
+    this.arcTo(x, y + height, x, y, radius);
+    this.arcTo(x, y, x + width, y, radius);
+    this.closePath();
+  };
+}
+
+function actualizarLetras() {
+  for (const l of letras) {
+    l.y += l.velocidad;
+    if (l.y > canvas.height) {
+      vidas--;
+      letras.splice(letras.indexOf(l), 1);
+      letras.push(crearLetra());
+      actualizarPuntos();
+      if (vidas <= 0) {
+        alert('¡Juego terminado! Puntos finales: ' + puntos);
+        reiniciarJuego();
+      }
+    }
+  }
+}
+
+async function manejarEntrada(input) {
+  const idx = letras.findIndex(l => l.letra.toUpperCase() === input.toUpperCase());
+  if (idx !== -1) {
+    const l = letras[idx];
+    letras.splice(idx, 1);
+    letras.push(crearLetra());
+    escribiendo = true;
+    if (sonidoActivo) await reproducirSonido(l.letra);
+    escribiendo = false;
+    puntos += 10;
+    letrasAcertadas++;
+    if (letrasAcertadas % LETRAS_PARA_VIDA === 0) {
+      vidas++;
+    }
+    actualizarPuntos();
+  }
+}
+
+function actualizarPuntos() {
+  scoreElement.textContent = puntos;
+  livesElement.textContent = vidas;
+}
+
+function reiniciarJuego() {
+  puntos = 0;
+  vidas = 5;
+  letrasAcertadas = 0;
+  juegoIniciado = false;
+  letras = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  actualizarPuntos();
+  crearTecladoVirtual();
+}
+
+function reproducirSonido(letra) {
+  return new Promise((resolve) => {
+    const u = new SpeechSynthesisUtterance(letra);
+    u.lang = 'es-ES';
+    u.onend = resolve;
+    speechSynthesis.cancel();
+    setTimeout(() => speechSynthesis.speak(u), 100);
+  });
+}
+
+function crearTecladoVirtual() {
+  keyboardContainer.innerHTML = '';
+  for (const fila of teclado) {
+    const filaDiv = document.createElement("div");
+    for (const l of fila) {
+      const tecla = document.createElement("div");
+      tecla.className = "key";
+      tecla.textContent = l;
+      tecla.onclick = () => manejarEntrada(l);
+      filaDiv.appendChild(tecla);
+    }
+    keyboardContainer.appendChild(filaDiv);
+  }
+}
+
+startButton.onclick = () => {
+  if (!juegoIniciado) {
+    iniciarLetras();
+    juegoIniciado = true;
+    crearTecladoVirtual();
+  }
+};
+
+resetButton.onclick = reiniciarJuego;
+
+soundToggle.onclick = () => {
+  sonidoActivo = !sonidoActivo;
+  soundToggle.textContent = sonidoActivo ? '🔊' : '🔇';
+};
+
+document.addEventListener('keydown', e => {
+  if (juegoIniciado && !escribiendo) manejarEntrada(e.key);
+  if (e.code === 'Space') {
+    pausado = !pausado;
+    pauseMessage.style.display = pausado ? 'block' : 'none';
+  }
+});
+
+function bucleJuego() {
+  if (juegoIniciado && !pausado && !escribiendo) {
+    dibujarLetras();
+    actualizarLetras();
+  }
+  requestAnimationFrame(bucleJuego);
+}
+
+bucleJuego();
+</script>
+</body>
+</html>
